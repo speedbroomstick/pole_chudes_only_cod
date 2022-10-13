@@ -1,0 +1,718 @@
+using System.Collections;
+using System.Collections.Generic;
+using System;
+using UnityEngine;
+using UnityEngine.UI;
+using Firebase.Database;
+using UnityEngine.Audio;
+using UnityEngine.SceneManagement;
+using System.Runtime.InteropServices;
+public class Fortune_friend : MonoBehaviour
+{
+    [SerializeField]
+    private GameObject menu_end;
+    [SerializeField]
+    private GameObject word_slov;
+    [SerializeField]
+    private GameObject word_slov2;
+    [SerializeField]
+    private InputField word_slovo;
+    [SerializeField]
+    private GameObject end;
+    [SerializeField]
+    private AudioSource[] aud;
+    private int point1 = 0;
+    private int chetchik = 0;
+    private int point2 = 0;
+    private bool xod = true;
+    private bool finish = false;
+    private string baraban;
+    DatabaseReference bd2;
+    [SerializeField]
+    private float speed;
+    [SerializeField]
+    private GameObject Whell;
+    [SerializeField]
+    private GameObject information;
+    private bool flajoc = false;
+    [SerializeField]
+    private GameObject panel;
+    private int[] flag = new int[33];
+    public Button[] ber;
+    public InputField[] inp;
+    public Text t;
+    public Text t2;
+    public Text t3;
+    int i = 0;
+    int number = 1;
+    public Text txt;
+    private string answer;
+    private int nomer;
+    private int[] slovo_size;
+    public void ending()
+    {
+        if (Input.GetKey("escape"))  // если нажата клавиша Esc (Escape)
+        {
+            if (menu_end.activeSelf == true)
+            {
+                menu_end.SetActive(false);
+            }
+            else
+            {
+                menu_end.SetActive(true);
+            }
+        }
+    }
+    public void one_play(int scine_id)
+    {
+        bd2.Child("play").Child("status").SetValueAsync(false);
+        SceneManager.LoadScene(scine_id);
+    }
+    public void inform()
+    {
+        information.SetActive(false);
+    }
+    public void zanovo(int scine_id)
+    {
+        SceneManager.LoadScene(scine_id);
+    }
+    public void b()
+    {
+        flag[0]++;
+        bd2.Child("play").Child("flag").Child("0").SetValueAsync(1);
+        StartCoroutine(bookvve());
+    }
+    private bool raskrutka_p1 = false;
+    private bool state = false;
+    private void n()
+    {
+        if (Input.GetKeyUp(KeyCode.Space))
+        {
+            flajoc = false;
+            speed = UnityEngine.Random.Range(6, 20);
+            number = 1;
+            raskrutka_p1 = true;
+            strik = 1;
+            flarum = 0;
+            StartCoroutine(bookvve());
+            bd2.Child("play").Child("koleso").SetValueAsync(speed);
+            rol = 0;
+            plusik = 0;
+            StartCoroutine(ochki());
+        }
+    }
+    private bool enderrrr = false;
+    public Text pobeda;
+    private void konec()
+    {
+        int chet = 0;
+        for (int i = 0; i < answer.Length; i++)
+        {
+            if (inp[i].text != "")
+            {
+                chet++;
+            }
+        }
+        if (chet == answer.Length)
+        {
+            if (xod)
+            {
+                pobeda.text = "Победила Lizi";
+            }
+            else
+            {
+                pobeda.text = "Победил Andru";
+            }
+            finish = true; t.text = "Слово угадано";
+            menu_end.SetActive(true);
+            enderrrr = true;
+        }
+    }
+    System.Random rm = new System.Random();
+    private void q(bool statee)
+    {
+        if (statee == false)
+        {
+            nomer = UnityEngine.Random.Range(1, 9);
+        }
+    }
+    private void Start()
+    {
+        information.SetActive(false);
+        enderrrr = false;
+        bd2 = FirebaseDatabase.DefaultInstance.RootReference;
+        StartCoroutine(starts());
+        menu_end.SetActive(false);
+        word_slov.SetActive(false);
+        word_slov2.SetActive(false);
+        end.SetActive(false);
+        bd2.Child("play").Child("koleso").SetValueAsync(0);
+        panel.SetActive(false);
+        bd2.Child("play").Child("flag").SetValueAsync(flag);
+        bd2.Child("play").Child("ochki_1").SetValueAsync(0);
+        bd2.Child("play").Child("ochki_2").SetValueAsync(0);
+
+    }
+    public IEnumerator Question_Load(string question)
+    {
+            var result = bd2.Child("questions").Child(question).GetValueAsync();
+            yield return new WaitUntil(predicate: () => result.IsCompleted);
+            if (result.Exception != null)
+            {
+                Debug.LogError(result.Exception);
+            }
+            else if (result.Result == null)
+            {
+                Debug.Log("Null");
+            }
+            else
+            {
+                DataSnapshot snapshot = result.Result;
+
+                txt.text = snapshot.Child("question").Value.ToString();
+                answer = snapshot.Child("answer").Value.ToString();
+                char[] bober = answer.ToCharArray();
+                for (int i = 0; i < bober.Length; i++)
+                {
+                    inp[i].GetComponentInChildren<Graphic>().color = Color.white;
+                }
+            }
+    }
+
+    private IEnumerator ochki()
+    {
+
+        var result = bd2.Child("play").GetValueAsync();
+        yield return new WaitUntil(predicate: () => result.IsCompleted);
+        if (result.Exception != null)
+        {
+            Debug.LogError(result.Exception);
+        }
+        else if (result.Result == null)
+        {
+            Debug.Log("Null");
+        }
+        else
+        {
+            DataSnapshot snapshot = result.Result;
+            point1 = Convert.ToInt32(snapshot.Child("ochki_1").Value);
+            point2 = Convert.ToInt32(snapshot.Child("ochki_2").Value);
+            t2.text = point1.ToString();
+            t3.text = point2.ToString();
+        }
+    }
+
+    private bool status;
+    private IEnumerator starts()
+    {
+
+        var result = bd2.Child("play").GetValueAsync();
+        yield return new WaitUntil(predicate: () => result.IsCompleted);
+        if (result.Exception != null)
+        {
+            Debug.LogError(result.Exception);
+        }
+        else if (result.Result == null)
+        {
+            Debug.Log("Null");
+        }
+        else
+        {
+            DataSnapshot snapshot = result.Result;
+            string ss;
+            ss = snapshot.Child("status").Value.ToString();
+            state = Convert.ToBoolean(ss);
+            while (true)
+            {
+                nomer = Convert.ToInt32(snapshot.Child("question").Value.ToString());
+                q(state);
+                if (nomer != 0)
+                {
+                    StartCoroutine(Question_Load(nomer.ToString()));
+                    bd2.Child("play").Child("question").SetValueAsync(nomer);
+                    break;
+                }
+            }
+            t.text = state.ToString();
+            if(state == false)
+            {
+                bd2.Child("play").Child("komp1").SetValueAsync(false);
+                status = false;
+                bd2.Child("play").Child("status").SetValueAsync(true);
+            }
+            else
+            {
+                bd2.Child("play").Child("komp2").SetValueAsync(true);
+                bd2.Child("play").Child("status").SetValueAsync(false);
+                status = true;
+            }
+
+        }
+    }
+    private IEnumerator load_play()
+    {
+
+        var result = bd2.Child("play").GetValueAsync();
+        yield return new WaitUntil(predicate: () => result.IsCompleted);
+        if (result.Exception != null)
+        {
+            Debug.LogError(result.Exception);
+        }
+        else if (result.Result == null)
+        {
+            Debug.Log("Null");
+        }
+        else
+        {
+            DataSnapshot snapshot = result.Result;
+            string speed2;
+            speed2 = snapshot.Child("koleso").Value.ToString();
+            speed = (float)Convert.ToDouble(speed2);
+        }
+    }
+
+    private IEnumerator bookvve()
+    {
+
+        var result = bd2.Child("play").GetValueAsync();
+        yield return new WaitUntil(predicate: () => result.IsCompleted);
+        if (result.Exception != null)
+        {
+            Debug.LogError(result.Exception);
+        }
+        else if (result.Result == null)
+        {
+            Debug.Log("Null");
+        }
+        else
+        {
+            DataSnapshot snapshot = result.Result;
+            for (int i = 0; i < 33; i++)
+            {
+                flag[i] = Convert.ToInt32(snapshot.Child("flag").Child(i.ToString()).Value);
+            }
+        }
+    }
+
+    private IEnumerator xoddddd()
+    {
+
+        var result = bd2.Child("play").GetValueAsync();
+        yield return new WaitUntil(predicate: () => result.IsCompleted);
+        if (result.Exception != null)
+        {
+            Debug.LogError(result.Exception);
+        }
+        else if (result.Result == null)
+        {
+            Debug.Log("Null");
+        }
+        else
+        {
+            DataSnapshot snapshot = result.Result;
+            xod = Convert.ToBoolean(snapshot.Child("xod").Value);
+            if(xod == status)
+            {
+                t.text = "Вращайте барабан";
+                n();
+                word_slov.SetActive(true);
+                word_slov2.SetActive(true);
+            }
+            else
+            {
+                t.text = "Ход соперника";
+                word_slov.SetActive(false);
+                word_slov2.SetActive(false);
+            }
+        }
+    }
+
+    private int strik = 0;
+    private bool flajoc2 = false;
+    private int plus_f = 0;
+    private int plusik = 0;
+    private void plus()
+    {
+        if (plusik == 0)
+        {
+            information.SetActive(true);
+            plusik++;
+        }
+        System.Random r = new System.Random();
+        t.text = "Выберите номер буквы на клавиатуре ";
+        panel.SetActive(false);
+        char[] bok = answer.ToCharArray();
+            if (Input.GetKeyUp(KeyCode.Alpha1) && plus_f == 0) { inp[0].text = bok[0].ToString(); plus_f++; }
+            if (Input.GetKeyUp(KeyCode.Alpha2) && plus_f == 0) { inp[1].text = bok[1].ToString(); plus_f++; }
+            if (Input.GetKeyUp(KeyCode.Alpha3) && plus_f == 0) { inp[2].text = bok[2].ToString(); plus_f++; }
+            if (Input.GetKeyUp(KeyCode.Alpha4) && plus_f == 0) { inp[3].text = bok[3].ToString(); plus_f++; }
+            if (Input.GetKeyUp(KeyCode.Alpha5) && plus_f == 0) { inp[4].text = bok[4].ToString(); plus_f++; }
+            if (Input.GetKeyUp(KeyCode.Alpha6) && plus_f == 0) { inp[5].text = bok[5].ToString(); plus_f++; }
+            if (Input.GetKeyUp(KeyCode.Alpha7) && plus_f == 0) { inp[6].text = bok[6].ToString(); plus_f++; }
+            if (Input.GetKeyUp(KeyCode.Alpha8) && plus_f == 0) { inp[7].text = bok[7].ToString(); plus_f++; }
+            if (Input.GetKeyUp(KeyCode.Alpha9) && plus_f == 0) { inp[8].text = bok[8].ToString(); plus_f++; }
+            if (Input.GetKeyUp(KeyCode.Alpha0) && plus_f == 0) { inp[9].text = bok[9].ToString(); plus_f++; }
+            if (Input.GetKeyUp(KeyCode.Q) && plus_f == 0) { inp[10].text = bok[10].ToString(); plus_f++; }
+            if (Input.GetKeyUp(KeyCode.W) && plus_f == 0) { inp[11].text = bok[11].ToString(); plus_f++; }
+            if (plus_f == 1)
+            {
+                for (int d = 0; d < bok.Length; d++)
+                {
+                    if (inp[d].text != "")
+                    {
+                        for (int i = 0; i < bok.Length; i++)
+                        {
+                            if (Convert.ToChar(inp[d].text) == bok[i])
+                            {
+                                inp[i].text = bok[i].ToString();
+                            }
+                        }
+                    }
+                }
+            }
+    }
+    private int rol = 0;
+    private void Update()
+    {
+
+        chek();
+        ending();
+        Bankrot();
+        if (strik == 1)
+        {
+            konec();
+        }
+        if (finish == true) { end.SetActive(true); }
+        if (number == 1)
+        {
+            if (speed > 0)
+            {
+                Whell.transform.Rotate(transform.forward * -speed);
+                speed -= Time.deltaTime;
+            }
+            else if (speed < 0 && i == 0)
+            {
+                i++;
+                speed = 0.4f;
+            }
+        }
+        if (flajoc == false && speed < 0)
+        {
+            speed = 0.3f;
+            flajoc2 = true;
+
+        }
+
+        if (baraban == "+")
+        {
+            plus();
+        }
+        if (speed > 0 && rol == 0)
+        {
+            aud[0].Stop();
+            aud[4].Play();
+            rol++;
+        }
+        if (speed > 0) { 
+        if (enderrrr == false)
+        {
+                bd2.Child("play").Child("status").SetValueAsync(true);
+            }
+        else
+        {
+                bd2.Child("play").Child("status").SetValueAsync(false);
+            }
+        }
+        else
+        {
+                StartCoroutine(load_play());
+            if (speed > 0) { bd2.Child("play").Child("koleso").SetValueAsync(0); }
+            StartCoroutine(xoddddd());
+            StartCoroutine(ochki());/////////////////////////////////////
+        }
+
+    }
+    private int flarum = 0;
+    public void Bankrot()
+    {
+        if (flarum == 0)
+        {
+            if (baraban == "Б")
+            {
+                if (xod)
+                {
+                    point1 = 0;
+                    xod = !xod;
+                }
+                else
+                {
+                    point1 = 0;
+                    xod = !xod;
+                }
+                t2.text = point1.ToString();
+                t3.text = point2.ToString();
+                panel.SetActive(false);
+                bd2.Child("play").Child("xod").SetValueAsync(xod);
+                flarum++;
+            }
+        }
+    }
+    public void chek()
+    {
+        if (answer != null)
+        {
+            StartCoroutine(bookvve());
+            char[] bok = answer.ToCharArray();
+            for (int d = 0; d < bok.Length; d++)
+            {
+                for (int h = 0; h < 33; h++)
+                {
+                    if (flag[h] == 1)
+                    {
+                        if (Convert.ToChar(ber[h].GetComponentInChildren<Text>().text) == bok[d] && inp[d].text == "")
+                        {
+                            inp[d].text = bok[d].ToString();
+                            chetchik++;
+                        }
+                        ber[h].GetComponentInChildren<Graphic>().color = Color.red;
+                        ber[h].gameObject.SetActive(false);
+
+                    }
+                }
+            }
+        }
+    }
+    public void BOOK()
+    {
+        char[] bok = answer.ToCharArray();
+        for (int d = 0; d < bok.Length; d++)
+        {
+            for (int h = 0; h < 33; h++)
+            {
+                if (flag[h] == 1)
+                {
+                    if (Convert.ToChar(ber[h].GetComponentInChildren<Text>().text) == bok[d] && inp[d].text == "")
+                    {
+                        inp[d].text = bok[d].ToString();
+                        chetchik++;
+                    }
+                    ber[h].GetComponentInChildren<Graphic>().color = Color.red;
+                    ber[h].gameObject.SetActive(false);
+                    panel.SetActive(false);
+                }
+            }
+        }
+
+        switch (baraban)
+        {
+            case "100":
+                if (xod && chetchik > 0)
+                {
+                    point1 += chetchik * 100;
+                }
+                else if (xod == false && chetchik > 0)
+                {
+                    point2 += chetchik * 100;
+                }
+                else
+                {
+                    xod = !xod;
+                }
+                break;
+            case "200":
+                if (xod && chetchik > 0)
+                {
+                    point1 += chetchik * 200;
+                }
+                else if (xod == false && chetchik > 0)
+                {
+                    point2 += chetchik * 200;
+                }
+                else
+                {
+                    xod = !xod;
+                }
+                break;
+            case "1000":
+                if (xod && chetchik > 0)
+                {
+                    point1 += chetchik * 1000;
+                }
+                else if (xod == false && chetchik > 0)
+                {
+                    point2 += chetchik * 1000;
+                }
+                else
+                {
+                    xod = !xod;
+                }
+                break;
+            case "250":
+                if (xod && chetchik > 0)
+                {
+                    point1 += chetchik * 250;
+                }
+                else if (xod == false && chetchik > 0)
+                {
+                    point2 += chetchik * 250;
+                }
+                else
+                {
+                    xod = !xod;
+                }
+                break;
+            case "Б":
+                if (xod)
+                {
+                    point1 = 0;
+                    xod = !xod;
+                }
+                else
+                {
+                    point1 = 0;
+                    xod = !xod;
+                }
+                break;
+            case "2x":
+                if (xod && chetchik > 0)
+                {
+                    point1 *= 2;
+                }
+                else if (xod == false && chetchik > 0)
+                {
+                    point2 *= 2;
+                }
+                else
+                {
+                    xod = !xod;
+                }
+                break;
+            case "0":
+                if (xod)
+                {
+                    point1 += 0;
+                }
+                if (xod == false)
+                {
+                    point2 += 0;
+                }
+                else
+                {
+                    xod = !xod;
+                }
+                break;
+            case "4x":
+                if (xod && chetchik > 0)
+                {
+                    point1 *= 4;
+                }
+                else if (xod == false && chetchik > 0)
+                {
+                    point2 *= 4;
+                }
+                else
+                {
+                    xod = !xod;
+                }
+                break;
+        }
+        chetchik = 0;
+        bd2.Child("play").Child("ochki_1").SetValueAsync(point1);
+        bd2.Child("play").Child("ochki_2").SetValueAsync(point2);
+        bd2.Child("play").Child("xod").SetValueAsync(xod);
+        StartCoroutine(ochki());
+        t2.text = point1.ToString();
+        t3.text = point2.ToString();
+    }
+    public void word()
+    {
+        int shet = 0;
+        char[] bok = answer.ToCharArray();
+        char[] bok2 = word_slovo.text.ToCharArray();
+        for (int d = 0; d < bok.Length; d++)
+        {
+            if (char.ToUpper(bok2[i]) == bok[i])
+            {
+                shet++;
+            }
+        }
+        if (shet == bok.Length)
+        {
+            for (int i = 0; i < bok.Length; i++)
+            {
+                inp[i].text = bok[i].ToString();
+            }
+            finish = true;
+            t.text = "Слово угадано";
+            if (xod)
+            {
+                pobeda.text = "Победила Lizi";
+            }
+            else
+            {
+                pobeda.text = "Победил Andru";
+            }
+            finish = true; t.text = "Слово угадано";
+            menu_end.SetActive(true);
+            enderrrr = true;
+        }
+
+    }
+    private void OnTriggerStay2D(Collider2D other)
+    {
+
+            if (speed < 0 || flajoc2 == true)
+            {
+                bd2.Child("play").Child("koleso").SetValueAsync(0);
+                aud[4].Stop();
+                aud[0].Play();
+                baraban = other.gameObject.GetComponent<Text>().text;
+                flajoc = true; // для толчка до тех пор пока не остановится выбор на значении
+                t.text = "На барабане: " + other.gameObject.GetComponent<Text>().text;
+                flajoc2 = false; //для толчков 
+            if (status == xod)
+            {
+                panel.SetActive(true);
+            }
+                if (baraban == "+")
+                {
+                    plus_f = 0;
+                }
+            }
+    }
+}
+class play
+{
+    public double koleso;
+    public int question;
+    public int[] flag;
+    public int ochki_1;
+    public int ochki_2;
+    public bool xod;
+    public bool status;
+    public play(double k,int q, int[] b, int o1, int o2, bool x, bool s)
+    {
+        question = q;
+        koleso = k;
+        flag = b;
+        ochki_1 = o1;
+        ochki_2 = o2;
+        xod = x;
+        status = s;
+    }
+    public play(double k, bool s)
+    {
+        koleso = k;
+        status = s;
+    }
+    public play(int[] b)
+    {
+        flag = b;
+    }
+    public play(int q)
+    {
+        question = q;
+    }
+
+}
+ 

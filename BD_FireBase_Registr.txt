@@ -1,0 +1,68 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using Firebase.Database;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+public class BD : MonoBehaviour
+{
+    DatabaseReference bd2;
+   public Text txt;
+    public int i = 0;
+
+    void Start()
+    {
+        //int w = Screen.width;
+        //int h = Screen.height;
+        //Screen.SetResolution(w, h, false, 60);
+        bd2 = FirebaseDatabase.DefaultInstance.RootReference;
+    }
+
+    void Update()
+    {
+       
+    }
+    public void SaveData(string str, string pas)
+    {
+        Data dat = new Data(str, pas, false);
+        string json = JsonUtility.ToJson(dat);
+        bd2.Child("users").Child(str).SetRawJsonValueAsync(json);
+    }
+   public IEnumerator LoadDate(string log, string parol, InputField inp)
+    {
+            var result = bd2.Child("users").Child(log).GetValueAsync();
+            yield return new WaitUntil(predicate: () => result.IsCompleted);
+            if (result.Exception != null)
+            {
+                Debug.LogError(result.Exception);
+            }
+            else if (result.Result == null)
+            {
+                Debug.Log("Null");
+            }
+            else
+            {
+                DataSnapshot snapshot = result.Result;
+                if (log == snapshot.Child("login").Value.ToString() && parol == snapshot.Child("pasword").Value.ToString())
+                {
+                    txt.text = "Вы вошли";
+                    bd2.Child("users").Child(inp.text).Child("active").SetValueAsync(true);
+                    i = 1;
+                }
+            }
+    }
+    public void one_play(int scine_id)
+    {
+        if (i == 1)
+        {
+            SceneManager.LoadScene(scine_id);
+        }
+    }
+}
+class Data
+{
+    public string login;
+    public string pasword;
+    public bool active;
+    public Data(string l, string p, bool a) { login = l; pasword = p; active = a; }
+}
